@@ -1,0 +1,67 @@
+﻿<Window x:Class="Transposoft.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Transposoft.Views"
+        xmlns:viewModels="clr-namespace:Transposoft.ViewModels"
+        mc:Ignorable="d"
+        Title="MainView" Height="450" Width="800"
+        DataContext="{DynamicResource mainViewModel}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <viewModels:MainViewModel x:Key="mainViewModel"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Text="{Binding File1, Mode=OneWay}"/>
+            <Button Grid.Column="1" Content="Файл1" Command="{Binding OpenFileCommand}" CommandParameter="file1"/>
+            <TextBox Grid.Column="2" Text="{Binding File2, Mode=OneWay}"/>
+            <Button Grid.Column="3" Content="Файл2" Command="{Binding OpenFileCommand}" CommandParameter="file2"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+            <DatePicker Grid.Column="0" SelectedDate="{Binding DateFrom}"/>
+            <DatePicker Grid.Column="1" SelectedDate="{Binding DateTo}"/>
+            <Button Grid.Column="2" Content="Слияние" Command="{Binding MergeCommand}"/>
+        </Grid>
+        
+                <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding MainModel}"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Шифр" Binding="{Binding Cipher}" Width="*"/>
+                <DataGridTextColumn Header="Дата действия с" Binding="{Binding DateFrom, StringFormat=\{0:dd.MM.yyyy\}}" Width="*"/>
+                <DataGridTextColumn Header="Дата действия по" Binding="{Binding DateTo, StringFormat=\{0:dd.MM.yyyy\}}" Width="*"/>
+                <DataGridTextColumn Header="IsExt" Binding="{Binding IsExt}" Width="*"/>
+                <DataGridTextColumn Header="ExtID" Binding="{Binding ExtID}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        
+    </Grid>
+</Window>
