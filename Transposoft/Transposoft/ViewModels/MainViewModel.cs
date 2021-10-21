@@ -29,15 +29,17 @@ namespace Transposoft.ViewModels
             {
                 if (File1 == null || File2 == null)
                     throw new FileNotFoundException();
-                if (File1 != file1Сache)
+                //check if a new file1 has been uploaded
+                if (isFile1New)
                 {
                     ExcelFile1 = LoadExcel(File1);
-                    file1Сache = File1;
+                    isFile1New = false;
                 }
-                if (File2 != file2Сache)
+                //check if a new file2 has been uploaded
+                if (isFile2New)
                 {
                     ExcelFile2 = LoadExcel(File2);
-                    file2Сache = File2;
+                    isFile2New = false;
                 }
                 MainModel = Merge(ExcelFile1, ExcelFile2);
             }
@@ -53,6 +55,13 @@ namespace Transposoft.ViewModels
             catch (InvalidCastException){
                 MessageBox.Show("Ошибка формата таблицы в excel файле");
             }
+            catch (FormatException)
+            {
+                MessageBox.Show("Неверный формат строки в файле");
+            }
+            catch(Exception){
+                MessageBox.Show("Ошибка");
+            }
             
         }
 
@@ -67,9 +76,11 @@ namespace Transposoft.ViewModels
                 {
                     case "file1":
                         File1 = openFileDialog.FileName;
+                        isFile1New = true;
                         break;
                     case "file2":
                         File2 = openFileDialog.FileName;
+                        isFile2New = true;
                         break;
                 }
             }
@@ -81,15 +92,31 @@ namespace Transposoft.ViewModels
         {
             int lastId = model1.Last().Id;
             DateTime? dateFrom = DateTime.MinValue;
-            if (DateFrom != null) { dateFrom = DateFrom; }
             DateTime? dateTo = DateTime.MaxValue;
+            if (DateFrom != null) { dateFrom = DateFrom; }
             if (DateTo != null) { dateTo = DateTo; }
+
+            //fetching data between dates
             List<ExcelModel> m1 = new List<ExcelModel>(model1.FindAll(m => m.DateFrom >= dateFrom || m.DateFrom == null).FindAll(m => m.DateTo <= dateTo || m.DateTo == null));
             List<ExcelModel> m2 = new List<ExcelModel>(model2.FindAll(m => m.DateFrom >= dateFrom || m.DateFrom == null).FindAll(m => m.DateTo <= dateTo || m.DateTo == null));
+            if(DateTo == null && DateFrom != null)
+            {
+                m1 = m1.Except(m1.FindAll(m => m.DateFrom == null && m.DateTo < dateFrom)).ToList();
+                m2 = m2.Except(m2.FindAll(m => m.DateFrom == null && m.DateTo < dateFrom)).ToList();
+            }
+            else if (DateFrom == null && DateTo != null)
+            {
+                m1 = m1.Except(m1.FindAll(m => m.DateTo == null && m.DateFrom > DateTo)).ToList();
+                m2 = m2.Except(m2.FindAll(m => m.DateTo == null && m.DateFrom > DateTo)).ToList();
+
+            }
+            
             List<MainModel> result = new List<MainModel>();
             foreach(var model in m1)
             {
                 MainModel mainModel = new MainModel(model, 0, null);
+                //check if there is a record from the file1 in file2 by cipher
+                //if there is, then form data, delete the record from the list of file2
                 int index = m2.FindIndex(m => m.Cipher == model.Cipher);
                 if (index != -1){
                     mainModel.ExtID = m2[index].Id;
@@ -105,6 +132,7 @@ namespace Transposoft.ViewModels
                 }
                 result.Add(mainModel);
             }
+            //add the remaining files, generate id
             foreach (var model in m2)
             {
                 result.Add(new MainModel(model, 1, ++lastId));
@@ -157,7 +185,7 @@ namespace Transposoft.ViewModels
         public List<ExcelModel> ExcelFile1 { get; set; }
         public List<ExcelModel> ExcelFile2 { get; set; }
 
-        private string file1Сache;
+        private bool isFile1New;
         private string _file1;
         public string File1
         {
@@ -165,7 +193,7 @@ namespace Transposoft.ViewModels
             set { SetProperty(ref _file1, value); }
         }
 
-        private string file2Сache;
+        private bool isFile2New;
         private string _file2;
         public string File2
         {
@@ -173,8 +201,37 @@ namespace Transposoft.ViewModels
             set { SetProperty(ref _file2, value); }
         }
 
-        public DateTime? DateFrom { get; set; }
-        public DateTime? DateTo { get; set; }
+        private DateTime? _dateFrom;
+        public DateTime? DateFrom {
+            get { return _dateFrom; } 
+            set { 
+                if(value > DateTo)
+                {
+                    MessageBox.Show("Начальная дата не может быть больше конечно");
+                }
+                else
+                {
+                    SetProperty(ref _dateFrom, value);
+                }
+            } 
+        }
+
+        private DateTime? _dateTo;
+        public DateTime? DateTo
+        {
+            get { return _dateTo; }
+            set
+            {
+                if (value < DateFrom)
+                {
+                    MessageBox.Show("Конечная дата не может быть меньше начальной");
+                }
+                else
+                {
+                    SetProperty(ref _dateTo, value);
+                }
+            }
+        }
         #endregion
     }
 }
